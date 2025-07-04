@@ -6,7 +6,7 @@ the project focuses upon writing simple C programs, On a few different UNIX util
 * Learn how to use a proper code editor (likw vscode ,etc..)
 * Learn a little about how UNIX utilities are implemented
 # Summary of what gets turned in:
-* A bunch of single .c files for each of the utilities
+* A single .c file for each of the utilities
 * Each should compile successfully when compiled with the **-Wall** and
 **-Werror** flags.
-* Each should (hopefully) pass the tests we supply to you.
+* Each should (hopefully) Run in linux or unix 
