@@ -2,33 +2,70 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#define PATH_MAX 1024
+#include <time.h>
+#include <string.h>
+#include <stdbool.h>
+#define PATH_LIMIT 1024
 
-int inode ( DIR *fdir , const char *path){
+int list_entries ( DIR *fdir , const char *path, bool advanced ){
     struct dirent *entry;
     struct stat status;
-    char path_buffer[PATH_MAX];
-    printf("inode\t | \tType\t | \tname\n");
-    printf("-----\t   \t----\t   \t----\n");
-    while((entry = readdir(fdir)) != NULL){
-    printf("%-5llu\t |",entry->d_ino);
-    snprintf(&path_buffer,sizeof(path_buffer),"%s/%s",path,entry->d_name);
-    if(stat(&path_buffer,&status) == -1){
+    char path_buffer[PATH_LIMIT];
+    //time buffers
+    char created_time[25] , modified_time[25] ;
+    char l_accessed_buffer[25];
+
+
+    char type[10];
+    if(advanced ==1)
+    {
+        printf("inode\t|  Type  |    Creation time      |  last Modified time   |  last access time\t |  name \n");
+        printf("-----\t   ----       -------------         ------------------      ----------------\t    ---- \n");
+    }
+    else{
+        printf("Type\t|     Creation time \t|  last Modified time  |  name \n");
+        printf("----\t      ------------- \t   ------------------     ---- \n");
+    }
+    while((entry = readdir(fdir)) != NULL){ 
+
+    // To determine the Type of Entry
+    snprintf(path_buffer,sizeof(path_buffer),"%s/%s",path,entry->d_name);  //full address of particular entry 
+    if(stat(path_buffer,&status) == -1){
         fprintf(stderr, "[Error] stat\n");
         continue;
     }
-    if(S_ISDIR(status.st_mode)){
-        printf("\tDIR\t |\t");
+    if(S_ISDIR(status.st_mode)){  //Dir check + inode 
+        // printf("%-5llu\t | \tDIR\t |",(long long unsigned int )entry->d_ino);
+        strcpy(type,"DIR ");
     }
-    else if(S_ISREG(status.st_mode)){
-        printf("\tFILE\t |\t");
+    else if(S_ISREG(status.st_mode)){ //File check + inode 
+        // printf("%-5llu\t | \tFILE\t |",(long long unsigned int )entry->d_ino);
+        strcpy(type,"FILE");
     }
-    else{
-        printf("\tother\t |\t");
+    else{ //if syslink , binary etc.. + inode 
+        // printf("%-5llu\t | \tOTR\t |",(long long unsigned int )entry->d_ino);
+        strcpy(type,"OTR ");
     }
-    printf("%-5s",entry->d_name);
-    printf("\n");
+
+    
+    //to find And print Date when file is created and last modified
+    struct tm *creation_time , *l_modification_time,*l_access_time;
+    creation_time       = localtime(&status.st_ctime);
+    l_modification_time = localtime(&status.st_mtime);
+   
+    strftime(created_time,sizeof(created_time),"%Y-%m-%d %H:%M:%S",creation_time);
+    strftime(modified_time,sizeof(modified_time),"%Y-%m-%d %H:%M:%S",l_modification_time);
+
+    if(advanced){
+        l_access_time = localtime(&status.st_atime);
+        strftime(l_accessed_buffer,sizeof(l_accessed_buffer),"%Y-%m-%d %H:%M:%S",l_access_time);
+    }
+   
+     advanced?printf("%llu |  %s\t |  %s  |  %s  |  %s  |  %s\n",(long long unsigned int)entry->d_ino,type,created_time,modified_time,l_accessed_buffer,entry->d_name)
+    :( printf("%s\t   %s     %s    %s\n",type,created_time,modified_time,entry->d_name));
+    
 }
+printf("%d\n",advanced);
 }
 
 int main(int argc ,char * argv[]){
@@ -37,7 +74,7 @@ int main(int argc ,char * argv[]){
    const char *path = (argc>1)?argv[1]:".";
    fdir = opendir(path);
    if(fdir == NULL){
-    fprintf(stdout, "[Error]__Failed_to_open\n");
+    fprintf(stderr, "[Error]__Failed_to_open\n");
     exit(1);
    }
    if(argc ==1){
@@ -49,9 +86,18 @@ int main(int argc ,char * argv[]){
     }
     printf("\n");
    }
-  else
+  else if (argc == 2)
   {
-    inode(fdir,path);
+    list_entries(fdir,path,false);
+   }
+   else if (argc == 3  ){
+
+      if(strcmp(argv[2],"A") == 0)
+     {list_entries(fdir,path,true);}
+   }
+   else{
+       fprintf(stderr,"[Error] Argument :<Path> <option>..\n");
+       exit(1);
    }
    closedir(fdir);
    return 0;
