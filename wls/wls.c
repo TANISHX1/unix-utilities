@@ -19,8 +19,8 @@ int list_entries ( DIR *fdir , const char *path, bool advanced ){
     char type[10];
     if(advanced ==1)
     {
-        printf("inode\t|  Type  |    Creation time      |  last Modified time   |  last access time\t |  name \n");
-        printf("-----\t   ----       -------------         ------------------      ----------------\t    ---- \n");
+        printf("inode\t|  Type  |    Creation time      |  last Modified time   |  last access time\t | Device ID | Length(B) |  name \n");
+        printf("-----\t   ----       -------------         ------------------      ----------------\t   ---------   ---------    ---- \n");
     }
     else{
         printf("Type\t|     Creation time \t|  last Modified time  |  name \n");
@@ -61,9 +61,13 @@ int list_entries ( DIR *fdir , const char *path, bool advanced ){
         strftime(l_accessed_buffer,sizeof(l_accessed_buffer),"%Y-%m-%d %H:%M:%S",l_access_time);
     }
    
-     advanced?printf("%llu |  %s\t |  %s  |  %s  |  %s  |  %s\n",(long long unsigned int)entry->d_ino,type,created_time,modified_time,l_accessed_buffer,entry->d_name)
-    :( printf("%s\t   %s     %s    %s\n",type,created_time,modified_time,entry->d_name));
-    
+     if(advanced){
+        printf("%llu |  %s\t |  %s  |  %s  |  %s  |  %7lu  |",(long long unsigned int)entry->d_ino,type,created_time,modified_time,l_accessed_buffer,(unsigned long)status.st_dev);
+        printf(" %10lu |  %s\n",status.st_size,entry->d_name);
+     }
+     else{
+        ( printf("%s\t   %s     %s    %s\n",type,created_time,modified_time,entry->d_name));
+     }
 }
 printf("%d\n",advanced);
 }
