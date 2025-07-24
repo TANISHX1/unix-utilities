@@ -8,7 +8,7 @@
 #include "style.h"
 #define PATH_LIMIT 1024
 
-int list_entries(DIR *fdir, const char *path, bool advanced)
+void list_entries(DIR *fdir, const char *path, bool advanced)
 {
     struct dirent *entry;
     struct stat status;
